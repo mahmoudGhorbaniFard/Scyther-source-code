@@ -1,0 +1,149 @@
+hashfunction H;
+const xor: Function;
+const con: Function;
+const PUF: Function;
+const F160f: Function;
+const E160e: Function;
+usertype Ticket;
+usertype Timestamp;
+const HDIDj;
+secret HIDi;
+secret IDi;
+secret DIDi;
+secret PWi;
+secret A3;
+secret A2;
+secret A1;
+secret Wi;
+secret Cj;
+secret GIDi;
+const Cjnew;
+secret Rj;
+secret B1;
+secret Xser;
+protocol  ImprovedProtocol-B (G,D,S){
+// USER_GATEWAY LEVEL 1
+macro rastar=xor(A2,H(con(IDi,PWi)));
+macro HPWistar=H(con(con(PWi,rastar),IDi));
+macro A3star=H(con(con(IDi,HPWistar),PWi));
+macro A1star=xor(xor(A1,HPWistar),T1);
+// DRON LEVEL 1
+macro Cjstar=F160f(xor(xor(A1star,HDIDj),T1));
+macro HIDistar= E160e(xor(xor(A1star,HDIDj),T1));
+macro Rjstar= PUF(Cjstar);
+macro B1star= H(con(con(Cjstar,Rjstar),GIDi));
+macro Rjnew=PUF(Cjnew);
+macro M1= xor(Rjnew,H(con(Rjstar,T2)));
+macro M2=H(con(con(HIDistar,Rjstar),T2));
+macro NHDIDj=H(con(HDIDj,Rjnew));
+macro Z1=H(con(con(con(M1,M2),Rjnew),NHDIDj));
+// USER_GATEWAY LEVEL 2
+macro KGSistar=xor(Wi,HPWistar);
+macro Z1star= H(con(con(M1,M2),Rjnew));
+macro M3=xor(xor(R1,KGSistar),M2);
+macro M4=H(con(con(con(HDIDj,GIDi),R1),T2));
+macro NHIDi=H(con(HIDi,R1));
+macro Z2=H(con(con(con(M1,M3),R1),NHIDi));
+// SERVER ONLY LEVEL
+macro KGSi=H(con(HIDi,Xser));
+macro Rjnew=xor(xor(M1,M5),H(con(R1star,T3))); 
+macro R1star=xor(xor(M3,KGSi),H(con(con(HIDi,Rj),T2)));
+macro NHIDistar= H(con(HIDi,R1star));
+macro Z2star=H(con(con(con(M1,M3),R1star),NHIDistar));
+macro M4star=H(con(con(con(HDIDj,GIDi),R1star),T3));
+macro M5=xor(H(con(Rj,T2)),H(con(R1star,T4)));
+macro M6=H(con(con(KGSi,R1star),T4));
+macro NHDIDjstar=H(con(HDIDj,Rjnew));
+macro Z1star=H(con(con(con(M1,M2),Rjnew),NHDIDjstar));
+macro M7=H(con(con(con(Rj,NHDIDjstar),T2),T4));
+macro Z3=H(con(M5,R1star));
+// USER_GATEWAY LEVEL 3
+macro Z3star= H(con(M5,R1));
+macro M6star=H(con(con(KGSistar,R1),T4));
+macro Rjnew=xor(xor(M1,M5),H(con(R1,T4)));
+macro NHDIDj=H(con(HDIDj,Rjnew));
+macro Z1star=H(con(con(con(M1,M2),Rjnew),NHDIDj));
+macro M8=xor(K1,H(con(Rjnew,T5)));
+macro M9=xor(R1,H(con(Rjnew,NHDIDj)));
+macro Z4= H(con(con(M8,M9),Rjnew));
+macro SK=H(con(K1,Rjnew));
+// DRON LEVEL 2
+macro M7star=H(con(con(con(Rj,NHDIDj),T2),T4));
+macro Z4star=H(con(con(M8,M9),Rjnew));
+macro K1=xor(M8,H(con(Rjnew,T5)));
+macro SK=H(con(K1,Rjnew));
+macro R1star=xor(M9,H(con(Rjnew,NHDIDj)));
+macro NHIDi= H(con(HIDi,R1star));
+role G{
+fresh R1: Nonce;
+fresh K1: Nonce;
+fresh ra: Nonce;
+fresh T1: Timestamp;
+fresh T3: Timestamp;
+fresh T5: Timestamp;
+var T2: Timestamp;
+var T4: Timestamp;
+send_1 (G,D,A1star,Cjnew,T1);
+var M1,M2,Z1;
+recv_2 (D,G,M1,M2,Z1,T2);
+send_3 (G,S,M1,M2,M3,M4,Z1,Z2,HDIDj,T2,T3);
+var M7,M6,M5;
+recv_4 (S,G,M5,M6,M7,Z3,T4);
+match(Z3,Z3star);
+match (M6star,M6);
+match (Z1star,Z1);
+send_5 (G,D,M7,M8,Z4,T4,T5);
+match (Z4,Z4star);
+claim_G (G, Secret, GIDi);
+claim_G (G, Secret, PWi);
+claim_G (G, Secret, ra);
+claim_G (G,SKR,SK);
+claim_G (G,Niagree);
+claim_G (G, Nisynch );
+claim_G (G, Alive );
+claim_G (G, Weakagree);
+}
+role D{
+var R1: Nonce;
+var K1: Nonce;
+fresh T2: Timestamp;
+fresh T6: Timestamp;
+var T1: Timestamp;
+var T4: Timestamp;
+var T5: Timestamp;
+var A1star,Cjnew;
+recv_1 (G,D,A1star,Cjnew,T1);
+send_2 (D,G,M1,M2,Z1,T2);
+var m7,M8;
+recv_5 (G,D,M7,M8,Z4,T4,T5);
+match(M7star,M7);
+claim_D (D, Secret, DIDi);
+claim_D (D, Secret, A3);
+claim_D (D,SKR,SK);
+claim_D (D,Niagree);
+claim_D (D, Nisynch );
+claim_D (D, Alive );
+claim_D (D, Weakagree);
+}
+role S{
+var R1: Nonce;
+var K1: Nonce;
+var ra: Nonce;
+fresh T4: Timestamp;
+var T1: Timestamp;
+var T2: Timestamp;
+var T3: Timestamp;
+var T5: Timestamp;
+recv_3 (G,S,M1,M2,M3,M4,Z1,Z2,HDIDj,T2,T3);
+match (Z2star,Z2);
+match (M4star,M4);
+macro Rjnew=xor(xor(M1,M5),H(con(R1star,T3))); 
+match (Z1star,Z1);
+send_4 (S,G, M5, M6, M7,Z3, T4);
+claim_S (S, Secret, KGSi);
+claim_S (S, Nisynch );
+claim_S (S, Niagree );
+claim_S (S, Alive );
+claim_S (S, Weakagree);
+}
+}
